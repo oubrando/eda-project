@@ -3,11 +3,17 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import seaborn as sns
+import zipfile
+from pathlib import Path
+import random
+import re
 
 
 class BtsData:
-    def __init__(self):
+    def __init__(self,sample_frac,years):
         print("Loading Data")
+        self.years = years
+        self.sample_frac = sample_frac
         self.df = self._read_data()
         print("Creating Airport Delay Plot")
         self.airport_delay_plot = self.create_airport_delay_plot()
@@ -20,7 +26,48 @@ class BtsData:
 
     
     def _read_data(self):
-        df = pd.read_parquet("../data/bts_all.parquet") #initital load of parquet file containing main DF data from Beaurue of Transportation Stats
+        
+        data_dir = Path("../data/raw/bts_on_time")
+        
+        # Get all zip files
+        all_zip_files = sorted(data_dir.glob("*.zip"))
+        
+        # Filter by selected years
+        zip_files = []
+        for zip_path in all_zip_files:
+            # Extract year from filename like "..._2020_1.zip"
+            match = re.search(r'_(\d{4})_\d+\.zip$', zip_path.name)
+            if match:
+                year = int(match.group(1))
+                if self.years is None or year in self.years:
+                    zip_files.append(zip_path)
+        
+        print(f"Found {len(zip_files)} files for selected years: {self.years}")
+        
+        # Load data from selected zip files
+        dfs = []
+        for zip_path in zip_files:
+            with zipfile.ZipFile(zip_path, 'r') as z:
+                # Find the CSV file in the zip
+                csv_files = [f for f in z.namelist() if f.endswith('.csv')]
+                if csv_files:
+                    csv_name = csv_files[0]
+                    with z.open(csv_name) as f:
+                        df_month = pd.read_csv(f)
+                        
+                        # Sample rows if requested
+                        if self.sample_frac is not None and self.sample_frac < 1.0:
+                            df_month = df_month.sample(frac=self.sample_frac, random_state=42)
+                        
+                        dfs.append(df_month)
+                        print(f"Loaded {zip_path.name}: {len(df_month):,} rows")
+        
+        if not dfs:
+            raise ValueError("No data loaded. Check year selection and file names.")
+        
+        # Combine all dataframes
+        df = pd.concat(dfs, ignore_index=True)
+        print(f"Total rows loaded: {len(df):,}")
         df_aircraft = pd.read_csv("../data/Aircraft.csv") #csv file of aircraft tail numbers and their makes and models
         df_airports = pd.read_csv("../data/Airports.csv") #csv file of airport codes and their country
         df_airline = pd.read_csv("../data/Airline.csv") #csv file of airline codes and they're full names
