@@ -4,7 +4,7 @@ from core import BtsData
 st.title("BTS Flight Delay Analysis")
 
 # Year selection
-available_years = list(range(2020, 2025))  # Adjust based on your data
+available_years = list(range(2020, 2025))  
 selected_years = st.multiselect(
     "Select Years", 
     options=available_years,
@@ -44,3 +44,31 @@ if 'bts_data' in st.session_state:
 
     if st.button("Plot Airport Delays vs Route Volume"):
         st.pyplot(bts_data.route_volume_plot)
+
+    if st.button("Plot Distance vs Delay"):
+        st.pyplot(bts_data.distance_delay_plot)
+
+    if st.button("Plot Departure Time Window Delays"):
+        st.pyplot(bts_data.departure_time_window_plot)
+
+    if st.button("Plot Monthly Delays"):
+        st.pyplot(bts_data.monthly_delay_plot)
+
+    if st.button("Plot Monthly Weather Delays"):
+        st.pyplot(bts_data.monthly_weather_delay_plot)
+    
+    # Add number input for airport weather delays
+    n_airports = st.number_input(
+        "Number of top airports to display", 
+        min_value=5, 
+        max_value=100, 
+        value=20,
+        step=5
+    )
+
+    if st.button("Plot Airport Weather Delays"):
+        fig = bts_data.create_airport_weather_delay_plot(top_n=n_airports)
+        st.pyplot(fig)
+
+    if st.button("Plot Hourly Airline Delays"):
+        st.pyplot(bts_data.hourly_airline_delay_plot)

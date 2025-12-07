@@ -24,6 +24,16 @@ class BtsData:
 
         self.route_volume_plot = self.create_route_volume_plot()
 
+        self.distance_delay_plot = self.create_distance_delay_plot()
+
+        self.departure_time_window_plot = self.create_departure_time_window_plot()
+
+        self.monthly_delay_plot = self.create_monthly_delay_plot()
+
+        self.monthly_weather_delay_plot = self.create_monthly_weather_delay_plot()
+
+        self.hourly_airline_delay_plot = self.create_hourly_airline_delay_plot()
+
     
     def _read_data(self):
         
@@ -309,6 +319,267 @@ class BtsData:
         ax.set_title("Average Delay per Flight vs Total Route Volume")
         ax.legend()
         ax.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        return fig
+
+    def create_distance_delay_plot(self):
+        """Create scatter plot of flight distance vs arrival delay."""
+        
+        # Sample data for plotting (use subset to avoid overplotting)
+        sample_size = min(50000, len(self.df))
+        df_sample = self.df.sample(n=sample_size, random_state=42)
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Scatter plot
+        ax.scatter(
+            df_sample["Distance"],
+            df_sample["ArrDelay"],
+            alpha=0.25,
+            s=10
+        )
+        
+        # Calculate correlation
+        corr = self.df["Distance"].corr(self.df["ArrDelay"])
+        
+        ax.set_xlabel("Distance (miles)")
+        ax.set_ylabel("Arrival Delay (min)")
+        ax.set_title(f"Flight Distance vs Arrival Delay (Correlation: {corr:.3f})")
+        ax.grid(True, alpha=0.3)
+        ax.axhline(y=0, color='red', linestyle='--', alpha=0.5, linewidth=1)
+        
+        plt.tight_layout()
+        return fig
+
+    def create_departure_time_window_plot(self):
+        """Create bar plot of average departure delay by departure time window."""
+        
+        # Create departure hour from CRSDepDateTime
+        df_dep = self.df.copy()
+        df_dep["dep_hour"] = df_dep["CRSDepDateTime"].dt.hour
+        
+        # Define time windows
+        bins = [0, 6, 10, 14, 18, 22, 24]
+        labels = [
+            "Late Night (00-05)",
+            "Morning (06-09)",
+            "Late Morning (10-13)",
+            "Afternoon (14-17)",
+            "Evening (18-21)",
+            "Late Evening (22-23)",
+        ]
+        
+        df_dep["dep_window"] = pd.cut(df_dep["dep_hour"], bins=bins, labels=labels, right=False)
+        
+        # Calculate statistics by window
+        window_delay = (
+            df_dep.groupby("dep_window", observed=True)["DepDelay"]
+            .agg(
+                n_flights="size",
+                avg_dep_delay="mean",
+                median_dep_delay="median"
+            )
+            .reset_index()
+        )
+        
+        # Create bar plot
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        sns.barplot(
+            data=window_delay,
+            x="dep_window",
+            y="avg_dep_delay",
+            palette="viridis",
+            ax=ax
+        )
+        
+        ax.set_xlabel("Departure Time Window")
+        ax.set_ylabel("Average Departure Delay (minutes)")
+        ax.set_title("Average Departure Delay by Departure Time Window")
+        ax.tick_params(axis='x', rotation=30)
+        ax.grid(True, alpha=0.3, axis='y')
+        
+        plt.tight_layout()
+        return fig
+
+    def create_monthly_delay_plot(self):
+        """Create bar plot of average delay minutes per month."""
+        
+        df_monthly = self.df.copy()
+        df_monthly["month_num"] = df_monthly["FlightDate"].dt.month
+        df_monthly["month_name"] = df_monthly["FlightDate"].dt.month_name()
+        
+        # Calculate monthly delay statistics
+        monthly_delay_stats = (
+            df_monthly.groupby(["month_num", "month_name"])["ArrDelay"]
+            .agg(
+                n_flights="size",
+                mean_delay="mean",
+                median_delay="median"
+            )
+            .sort_index()
+        )
+        
+        # Create bar plot
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        sns.barplot(
+            data=monthly_delay_stats.reset_index(),
+            x="month_name",
+            y="mean_delay",
+            order=monthly_delay_stats.reset_index()["month_name"]
+        )
+        
+        ax.set_xlabel("Month")
+        ax.set_ylabel("Average Delay (minutes)")
+        ax.set_title("Average Arrival Delay per Month")
+        ax.tick_params(axis='x', rotation=45)
+        ax.grid(True, alpha=0.3, axis='y')
+        
+        plt.tight_layout()
+        return fig
+
+    def create_monthly_weather_delay_plot(self):
+        """Create bar plot of average weather delay minutes per month."""
+        
+        df_weather = self.df.copy()
+        df_weather["month_num"] = df_weather["FlightDate"].dt.month
+        df_weather["month_name"] = df_weather["FlightDate"].dt.month_name()
+        
+        # Calculate monthly weather delay statistics
+        monthly_weather_stats = (
+            df_weather.groupby(["month_num", "month_name"])["WeatherDelay"]
+            .agg(
+                n_flights="size",
+                mean_weather_delay="mean",
+                total_weather_delay="sum"
+            )
+            .reset_index()
+            .sort_values("month_num")
+        )
+        
+        # Create bar plot
+        fig, ax = plt.subplots(figsize=(12, 6))
+        
+        sns.barplot(
+            data=monthly_weather_stats,
+            x="month_name",
+            y="mean_weather_delay",
+            palette="Blues",
+            ax=ax
+        )
+        
+        ax.set_xlabel("Month")
+        ax.set_ylabel("Average Weather Delay (minutes)")
+        ax.set_title("Average Weather Delay per Month")
+        ax.tick_params(axis='x', rotation=45)
+        ax.grid(True, alpha=0.3, axis='y')
+        
+        plt.tight_layout()
+        return fig
+    
+    def create_airport_weather_delay_plot(self, top_n=20):
+        """
+        Create bar plot of average weather delay per flight for top airports by volume.
+        
+        Parameters:
+        -----------
+        top_n : int
+            Number of top airports to display (max 100)
+        """
+        top_n = min(top_n, 100)  # Cap at 100
+        
+        # Calculate airport volume
+        airport_volume = (
+            self.df.melt(
+                id_vars=["FlightDate"],
+                value_vars=["Origin", "Dest"],
+                var_name="role",
+                value_name="airport"
+            )
+            .groupby("airport")
+            .size()
+            .reset_index(name="flight_volume")
+            .sort_values("flight_volume", ascending=False)
+        )
+        
+        # Get top N airports
+        top_airports = airport_volume.head(top_n)["airport"].tolist()
+        
+        # Calculate weather delay statistics for top airports
+        df_weather = self.df.copy()
+        df_weather["WeatherDelay"] = df_weather["WeatherDelay"].fillna(0)
+        
+        airport_weather = (
+            df_weather.melt(
+                id_vars=["WeatherDelay"],
+                value_vars=["Origin", "Dest"],
+                var_name="role",
+                value_name="airport"
+            )
+            .query("airport in @top_airports")
+            .groupby("airport")["WeatherDelay"]
+            .agg(
+                total_weather_delay="sum",
+                n_flights="size"
+            )
+            .assign(avg_weather_delay_per_flight=lambda x: x["total_weather_delay"] / x["n_flights"])
+            .reset_index()
+            .sort_values("avg_weather_delay_per_flight", ascending=False)
+        )
+        
+        # Create bar plot
+        fig, ax = plt.subplots(figsize=(14, max(8, top_n * 0.3)))
+        
+        sns.barplot(
+            data=airport_weather,
+            y="airport",
+            x="avg_weather_delay_per_flight",
+            palette="magma",
+            ax=ax
+        )
+        
+        ax.set_xlabel("Average Weather Delay per Flight (minutes)")
+        ax.set_ylabel("Airport")
+        ax.set_title(f"Weather Delay Minutes per Flight - Top {top_n} Airports by Volume")
+        ax.grid(True, alpha=0.3, axis='x')
+        
+        plt.tight_layout()
+        return fig
+
+    def create_hourly_airline_delay_plot(self):
+        """Create line plot of average departure delay by hour of day for each airline."""
+        
+        df_hourly = self.df.copy()
+        df_hourly["dep_hour"] = df_hourly["CRSDepDateTime"].dt.hour
+        
+        # Calculate average delay by hour and airline
+        avg_delay_by_hour = (
+            df_hourly.groupby(["Airline", "dep_hour"])["DepDelay"]
+            .mean()
+            .reset_index()
+        )
+        
+        # Create line plot
+        fig, ax = plt.subplots(figsize=(14, 7))
+        
+        sns.lineplot(
+            data=avg_delay_by_hour,
+            x="dep_hour",
+            y="DepDelay",
+            hue="Airline",
+            marker="o",
+            ax=ax
+        )
+        
+        ax.set_xlabel("Hour of Day (0-23)")
+        ax.set_ylabel("Average Departure Delay (minutes)")
+        ax.set_title("Average Departure Delay by Hour of Day for Each Airline", fontsize=16)
+        ax.set_xticks(range(0, 24))
+        ax.grid(True, alpha=0.3)
+        ax.axhline(y=0, color='red', linestyle='--', alpha=0.5, linewidth=1)
+        ax.legend(title="Airline", bbox_to_anchor=(1.05, 1), loc='upper left')
         
         plt.tight_layout()
         return fig
