@@ -6,30 +6,30 @@
 # DayOfWeek
 FlightDate
 Reporting_Airline
-# DOT_ID_Reporting_Airline
-# IATA_CODE_Reporting_Airline
+# DOT_ID_Reporting_Airline 
+# IATA_CODE_Reporting_Airline 
 Tail_Number
-# Flight_Number_Reporting_Airline
+# Flight_Number_Reporting_Airline 
 # OriginAirportID
 # OriginAirportSeqID
 # OriginCityMarketID
 Origin
-# OriginCityName
-# OriginState
+OriginCityName
+#OriginState
 # OriginStateFips
-# OriginStateName
+OriginStateName
 # OriginWac
 # DestAirportID
 # DestAirportSeqID
 # DestCityMarketID
 Dest
-# DestCityName
+DestCityName
 # DestState
 # DestStateFips
-# DestStateName
+DestStateName
 # DestWac
 CRSDepTime
-# DepTime
+DepTime
 DepDelay
 # DepDelayMinutes
 # DepDel15
@@ -40,31 +40,31 @@ WheelsOff
 WheelsOn
 TaxiIn
 CRSArrTime
-# ArrTime
+ArrTime
 ArrDelay
 # ArrDelayMinutes
 # ArrDel15
 # ArrivalDelayGroups
 # ArrTimeBlk
-# Cancelled
-# CancellationCode
-# Diverted
+Cancelled
+CancellationCode
+Diverted
 # CRSElapsedTime
-# ActualElapsedTime
-# AirTime
+ActualElapsedTime
+AirTime
 # Flights
-# Distance
+Distance
 # DistanceGroup
-# CarrierDelay
-# WeatherDelay
-# NASDelay
-# SecurityDelay
-# LateAircraftDelay
+CarrierDelay
+WeatherDelay
+NASDelay
+SecurityDelay
+LateAircraftDelay
 # FirstDepTime
-# TotalAddGTime
+TotalAddGTime
 # LongestAddGTime
-# DivAirportLandings
-# DivReachedDest
+DivAirportLandings
+DivReachedDest
 # DivActualElapsedTime
 # DivArrDelay
 # DivDistance
