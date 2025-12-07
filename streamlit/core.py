@@ -34,6 +34,8 @@ class BtsData:
 
         self.hourly_airline_delay_plot = self.create_hourly_airline_delay_plot()
 
+        self.delay_recovery_plot = self.create_delay_recovery_plot()
+
     
     def _read_data(self):
         
@@ -580,6 +582,56 @@ class BtsData:
         ax.grid(True, alpha=0.3)
         ax.axhline(y=0, color='red', linestyle='--', alpha=0.5, linewidth=1)
         ax.legend(title="Airline", bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.tight_layout()
+        return fig
+
+    def create_delay_recovery_plot(self):
+        """Create bar plot showing delay recovery analysis by airline."""
+        
+        df_recovery = self.df.copy()
+        
+        # Sort by tail number and scheduled departure time
+        df_recovery = df_recovery.sort_values(["Tail_Number", "CRSDepDateTime"])
+        
+        # Get previous flight's arrival delay for the same aircraft
+        df_recovery["PrevArrDelay"] = df_recovery.groupby("Tail_Number")["ArrDelay"].shift(1)
+        
+        # Classify previous flight as late or on-time (15 minute threshold)
+        df_recovery["PrevLate"] = df_recovery["PrevArrDelay"] > 15
+        
+        # Current flight's departure delay
+        df_recovery["NextDepDelay"] = df_recovery["DepDelay"]
+        
+        # Group by airline and previous flight status
+        recovery_by_carrier = (
+            df_recovery.groupby(["Airline", "PrevLate"])["NextDepDelay"]
+            .mean()
+            .unstack(fill_value=0)
+        )
+        
+        # Rename columns for clarity
+        recovery_by_carrier.columns = ["After On-Time", "After Late"]
+        recovery_by_carrier = recovery_by_carrier.sort_values("After Late", ascending=False)
+        
+        # Create grouped bar plot
+        fig, ax = plt.subplots(figsize=(14, 7))
+        
+        x = np.arange(len(recovery_by_carrier))
+        width = 0.35
+        
+        ax.bar(x - width/2, recovery_by_carrier["After On-Time"], width, 
+            label="After On-Time Previous Flight", color='lightblue')
+        ax.bar(x + width/2, recovery_by_carrier["After Late"], width, 
+            label="After Late Previous Flight (>15 min)", color='coral')
+        
+        ax.set_xticks(x)
+        ax.set_xticklabels(recovery_by_carrier.index, rotation=45, ha="right")
+        ax.set_ylabel("Average Departure Delay (minutes)")
+        ax.set_title("Delay Recovery Analysis by Airline", fontsize=14)
+        ax.grid(axis="y", alpha=0.3)
+        ax.legend()
+        ax.axhline(y=0, color='black', linestyle='-', alpha=0.3, linewidth=1)
         
         plt.tight_layout()
         return fig

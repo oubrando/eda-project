@@ -72,3 +72,6 @@ if 'bts_data' in st.session_state:
 
     if st.button("Plot Hourly Airline Delays"):
         st.pyplot(bts_data.hourly_airline_delay_plot)
+
+    if st.button("Plot Delay Recovery by Airline"):
+        st.pyplot(bts_data.delay_recovery_plot)
