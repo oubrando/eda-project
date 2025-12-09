@@ -1,1 +1,51 @@
+# Airline On-Time Performance Analysis - FInal Project
+
+**Auburn Univertisy * INSY6500 * FALL 2025**
+BY: Trace Warriner & Brandon Chambers
+
+## Project Overview
+This project seeks to examine airline on-time performance metric from the U.S. Department of Transportation 
+
+## Data Source
+U.S. Department of Transportation Statistics
+    * Contains flight-level record data includeing attributes such as flight date, departure/arrival times, airports, airlines, origin/destination
+
+Federal Aviation Administration
+    * Contains data on tail numbers, aircraft make and model
+
+## EDA Workflow
+Our work follows the six phases of EDA workflow:
+
+### 1. Load & Initial Reconnaissance
+         * Load multiple raw data files (CSVs & ZIPs)
+         * Identfy entities, attributes, and observations
+         * Assessed variable types, shapes, and missing data
+
+### 2. Data Quality Assessment
+         * Checked for dtype mismatches
+         * Identified missing data and the number of missing values
+
+### 3. Cleaning Decisions
+         * Converted dtypes and removed/imputed missing data
+         * Converted dates and times to datetime objects
+         * Joined aircraft, airline, and airport reference data using merge
+
+### 4. Statistical EDA
+         * Univariate, Bivariate, and multivariate analysis
+             * Delay distributions
+             * Flight volume
+             * Delay vs. distance
+             * Delay Drivers (airlines, airports)
+             * Trends by hour, day, month
+
+### 5. Transformations 
+
+## 
+
+        
+
+
+
+
+
 Repo for Auburn INSY 6500 class project by Trace Warriner and Brandon Chambers. 
