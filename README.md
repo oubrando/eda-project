@@ -13,6 +13,8 @@ U.S. Department of Transportation Statistics
 Federal Aviation Administration
   * Contains data on tail numbers, aircraft make and model
 
+**Disclaimer/Note: Due to limitations within Github, we had to resolve to only posting 9 months of year 2023 data in order to fit in on Github. Github would not allow us to push anything larger**
+
 ## EDA Workflow
 Our work follows the six phases of EDA workflow:
 
