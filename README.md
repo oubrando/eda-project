@@ -4,7 +4,7 @@
 BY: Trace Warriner & Brandon Chambers
 
 ## Project Overview
-This project seeks to examine airline on-time performance metric from the U.S. Department of Transportation 
+This project seeks to examine airline on-time performance metric from the U.S. Department of Transportation. The analysis question-driven following the class requirements that are set by the EDA worflow. Analysis is question driven, iterative and ground in domain knowledge and data quality.
 
 ## Data Source
 U.S. Department of Transportation Statistics
